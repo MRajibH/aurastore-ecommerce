@@ -1,0 +1,127 @@
+.section {
+  padding-block: 2rem 5rem;
+}
+
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.searchGroup {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchGroup input {
+  width: 100%;
+}
+
+.categories {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  min-width: 0; /* allow the scroll container to clip instead of forcing page overflow */
+  max-width: 100%;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Hide scrollbar for category selector bar */
+}
+
+.categories::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryBtn {
+  font-size: 0.875rem !important;
+  padding: 0.5rem 1.25rem !important;
+  min-height: 40px !important;
+  white-space: nowrap;
+}
+
+.sortGroup {
+  min-width: 180px;
+}
+
+.sortGroup select {
+  width: 100%;
+  cursor: pointer;
+}
+
+.noResults {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+}
+@media (max-width: 1024px) {
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .categories {
+    order: 1;
+  }
+  .searchGroup {
+    order: 2;
+  }
+  .sortGroup {
+    order: 3;
+  }
+}
+
+/* --- Secondary facets --- */
+.facetBar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultCount {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.facetToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.facetToggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.priceFacet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.priceFacet input[type="range"] {
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.loadMoreWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
+}

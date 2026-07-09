@@ -1,0 +1,19 @@
+.stars {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1;
+  font-family: Arial, sans-serif; /* consistent star glyph metrics */
+}
+
+.back {
+  color: #d4d4d8;
+}
+
+.front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  color: #f5a623;
+}
