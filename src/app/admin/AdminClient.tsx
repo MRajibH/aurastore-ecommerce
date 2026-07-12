@@ -6,6 +6,7 @@ import StarRating from '@/components/StarRating';
 import type { Review } from '@/lib/reviews/types';
 import type { Discount } from '@/lib/discounts/types';
 import type { AbandonedCart } from '@/lib/abandoned';
+import { SKINS, type ThemeSkin } from '@/lib/theme/skins';
 import styles from './admin.module.css';
 
 type AdminReview = Review & { productName: string | null };
@@ -42,9 +43,10 @@ interface AdminClientProps {
   discounts: Discount[];
   retention: { subscriberCount: number; abandonedCarts: AbandonedCart[] };
   topProducts: { name: string; units: number; revenue: number }[];
+  currentSkin: ThemeSkin;
 }
 
-export default function AdminClient({ stats, products, lowStockProducts, orders, users, carouselSlides, currentUserId, meta, reviews, discounts, retention, topProducts }: AdminClientProps) {
+export default function AdminClient({ stats, products, lowStockProducts, orders, users, carouselSlides, currentUserId, meta, reviews, discounts, retention, topProducts, currentSkin }: AdminClientProps) {
   const router = useRouter();
 
   const [recoveringId, setRecoveringId] = useState<string | null>(null);
@@ -57,7 +59,33 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
       setRecoveringId(null);
     }
   };
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customers' | 'carousel' | 'marketing' | 'reviews' | 'discounts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'customers' | 'carousel' | 'marketing' | 'reviews' | 'discounts' | 'appearance'>('overview');
+
+  // --- Appearance / storefront theme ---
+  const [skin, setSkin] = useState<ThemeSkin>(currentSkin);
+  const [skinSaving, setSkinSaving] = useState(false);
+  const [skinMsg, setSkinMsg] = useState<string | null>(null);
+
+  const saveSkin = async (next: ThemeSkin) => {
+    setSkin(next);
+    setSkinSaving(true);
+    setSkinMsg(null);
+    try {
+      const res = await fetch('/api/admin/settings/theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skin: next }),
+      });
+      if (!res.ok) throw new Error();
+      setSkinMsg('Theme updated — the storefront now uses this design.');
+      router.refresh();
+    } catch {
+      setSkin(currentSkin);
+      setSkinMsg('Failed to update the theme. Please try again.');
+    } finally {
+      setSkinSaving(false);
+    }
+  };
 
   // --- Discounts ---
   const [discForm, setDiscForm] = useState({ code: '', type: 'percent', value: '', minSubtotal: '', usageLimit: '' });
@@ -138,6 +166,8 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
   const [imageUploading, setImageUploading] = useState(false);
   const [gallery, setGallery] = useState<string[]>([]);
   const [galleryUploading, setGalleryUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoUploading, setVideoUploading] = useState(false);
 
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const [productError, setProductError] = useState<string | null>(null);
@@ -196,6 +226,27 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
 
   const removeGalleryImage = (url: string) => {
     setGallery((prev) => prev.filter((u) => u !== url));
+  };
+
+  const handleProductVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVideoUploading(true);
+    setProductError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('kind', 'video');
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Video upload failed');
+      setVideoUrl(data.url as string);
+    } catch (err) {
+      setProductError(err instanceof Error ? err.message : 'Video upload failed');
+    } finally {
+      setVideoUploading(false);
+      e.target.value = ''; // allow re-selecting the same file
+    }
   };
 
   // Field validation states
@@ -273,6 +324,8 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
           // applies the default placeholder (create).
           image_url: imageUrl || undefined,
           gallery,
+          // Always sent so it can be set or cleared; null removes the video.
+          video_url: videoUrl.trim() || null,
         }),
       });
 
@@ -301,6 +354,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
     setCategory('Electronics');
     setImageUrl('');
     setGallery([]);
+    setVideoUrl('');
     setEditProductId(null);
     setFieldErrors({});
   };
@@ -313,6 +367,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
     setCategory(product.category);
     setImageUrl(product.image_url || '');
     setGallery(Array.isArray(product.gallery) ? product.gallery : []);
+    setVideoUrl(product.video_url || '');
     setEditProductId(product.id);
     setProductError(null);
     setProductSuccess(false);
@@ -701,8 +756,54 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
           >
             Marketing
           </button>
+          <button
+            className={`${styles.tabBtn} ${activeTab === 'appearance' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            Appearance
+          </button>
         </div>
       </div>
+
+      {/* --- APPEARANCE TAB --- */}
+      {activeTab === 'appearance' && (
+        <section className={styles.tabPanel}>
+          <h2 className={styles.sectionHeading}>Storefront Theme</h2>
+          <p className={styles.sectionSub}>
+            Choose the design your entire storefront wears. This applies to every visitor. Light &amp; dark
+            mode still work within each theme (each visitor keeps their own toggle).
+          </p>
+          {skinMsg && <div className={styles.themeMsg}>{skinMsg}</div>}
+          <div className={styles.themeGrid}>
+            {SKINS.map((s) => {
+              const active = skin === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`${styles.themeCard} ${active ? styles.themeCardActive : ''}`}
+                  onClick={() => !active && saveSkin(s.id)}
+                  disabled={skinSaving}
+                  aria-pressed={active}
+                >
+                  <span className={`${styles.themeSwatch} ${styles['swatch_' + s.id]}`} aria-hidden="true">
+                    <span className={styles.themeSwatchBar} />
+                    <span className={styles.themeSwatchDot} />
+                  </span>
+                  <span className={styles.themeCardBody}>
+                    <span className={styles.themeCardTop}>
+                      <strong>{s.name}</strong>
+                      {active && <span className={styles.themeActiveTag}>Active</span>}
+                    </span>
+                    <span className={styles.themeTagline}>{s.tagline}</span>
+                    <span className={styles.themeDesc}>{s.description}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* --- OVERVIEW TAB --- */}
       {activeTab === 'overview' && (
@@ -958,6 +1059,47 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                   />
                   <span className={styles.fieldError} style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.35rem' }}>
                     {galleryUploading ? 'Uploading…' : `Add up to 10 extra images shown on the product page. (${gallery.length}/10)`}
+                  </span>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="prod-video">Product Video (optional)</label>
+                  {videoUrl && (
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <video
+                        src={videoUrl}
+                        controls
+                        preload="metadata"
+                        style={{ width: '100%', maxWidth: '320px', borderRadius: '8px', border: '1px solid var(--border-color)', background: '#000' }}
+                      />
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setVideoUrl('')}
+                          style={{ border: 'none', background: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.85rem', padding: '0.35rem 0' }}
+                        >
+                          × Remove video
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    id="prod-video"
+                    accept="video/mp4,video/webm,video/quicktime"
+                    onChange={handleProductVideoChange}
+                    disabled={videoUploading}
+                  />
+                  <input
+                    type="url"
+                    className="input-field"
+                    placeholder="…or paste a direct video URL (https://….mp4)"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    style={{ marginTop: '0.5rem' }}
+                  />
+                  <span className={styles.fieldError} style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.35rem' }}>
+                    {videoUploading ? 'Uploading video…' : 'Upload MP4/WebM/MOV (max 50 MB) or paste a direct link. Shown as the first item in the product gallery.'}
                   </span>
                 </div>
 

@@ -61,6 +61,22 @@
   letter-spacing: 0.14em;
 }
 
+/* --- Editorial skin: flat, monochrome, wide-tracked wordmark --- */
+:global([data-skin="editorial"]) .logoMark {
+  background: var(--primary);
+  box-shadow: none;
+}
+:global([data-skin="editorial"]) .logoGlow {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text-primary);
+  letter-spacing: 0.22em;
+  font-weight: 700;
+}
+:global([data-skin="editorial"]) .logoSub {
+  letter-spacing: 0.22em;
+}
+
 .desktopNav {
   display: flex;
   align-items: center;

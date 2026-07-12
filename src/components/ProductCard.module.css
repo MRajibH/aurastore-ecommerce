@@ -8,7 +8,9 @@
   overflow: hidden;
   border: 1px solid var(--border-color);
   position: relative;
-  background: linear-gradient(160deg, #f3f4f6 0%, #e9eaf0 100%);
+  /* Theme-aware neutral backdrop so transparent/white-bg product photos don't
+     punch a bright hole into the grid in dark mode. */
+  background: var(--surface-sunken);
 }
 
 /* Subtle brand sheen that appears on hover */
@@ -49,9 +51,9 @@
   top: 0.85rem;
   left: 0.85rem;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.92) !important;
+  background-color: var(--glass-bg) !important;
   color: var(--primary) !important;
-  border: 1px solid rgba(79, 70, 229, 0.25) !important;
+  border: 1px solid var(--border-color) !important;
   box-shadow: var(--shadow-sm);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -127,4 +129,42 @@
   color: var(--error);
   font-weight: 500;
   font-size: 0.8rem;
+}
+
+/* --- Editorial skin: calmer, image-forward cards --- */
+/* Drop the per-card blurb and the indigo hover sheen for a cleaner grid; the
+   full description still lives on the product page. */
+:global([data-skin="editorial"]) .description {
+  display: none;
+}
+:global([data-skin="editorial"]) .imageWrapper::after {
+  display: none;
+}
+:global([data-skin="editorial"]) .imageWrapper {
+  border-color: transparent;
+}
+:global([data-skin="editorial"]) .title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+:global([data-skin="editorial"]) .footer {
+  border-top: none;
+  padding-top: 0.5rem;
+}
+
+/* Quieter outline "Add to Cart" that fills on hover — matches the reference's
+   calm cards. Scoped to the in-card button only (not the hero CTA); the
+   out-of-stock disabled state keeps the standard disabled styling. */
+:global([data-skin="editorial"]) .cardBody > :global(.btn-primary):not(:disabled) {
+  background-color: transparent;
+  background-image: none;
+  color: var(--primary);
+  border: 1px solid var(--border-strong);
+  box-shadow: none;
+}
+:global([data-skin="editorial"]) .cardBody > :global(.btn-primary):not(:disabled):hover {
+  background-color: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }

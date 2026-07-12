@@ -113,12 +113,73 @@
   color: var(--primary);
 }
 
+/* Social icon row */
+.socials {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  background: var(--surface);
+  transition: color var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.socialLink:hover {
+  color: var(--primary);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
 .bottomBar {
   border-top: 1px solid var(--border-color);
   padding-block: 1.25rem;
 }
 
+.bottomInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .copy {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+/* Accepted-payment marks */
+.payments {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.payMark {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.55rem;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .bottomInner {
+    justify-content: center;
+    text-align: center;
+  }
 }

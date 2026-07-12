@@ -39,6 +39,7 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https:; " + // https: covers the Meta Pixel tracking image (facebook.com/tr)
+    "media-src 'self' https: blob:; " + // product videos: self-hosted uploads + pasted https: URLs
     "connect-src 'self' https://connect.facebook.net https://www.facebook.com https://graph.facebook.com; " + // Pixel + FB JS SDK graph calls
     "frame-src 'self' https://www.facebook.com;" // Facebook Login for Business dialog
   );

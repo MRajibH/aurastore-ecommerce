@@ -95,6 +95,122 @@
   --shadow-lg: 0 12px 24px -8px rgba(0, 0, 0, 0.5), 0 28px 56px -16px rgba(0, 0, 0, 0.7);
 }
 
+/* ============================================================================
+   EDITORIAL SKIN  ·  applied when <html data-skin="editorial">
+   A calmer, boutique design language: warm neutral palette, a single FLAT
+   accent (no gradients), sharper radii, and flatter cards. Only tokens and a
+   few skin-scoped component overrides change — structure/markup stay identical.
+   Specificity note: [data-skin="editorial"] ties with [data-theme="dark"], so
+   the editorial-dark block below carries a 2-attribute selector to always win.
+   ============================================================================ */
+[data-skin="editorial"] {
+  --bg-primary: #f6f4ef;       /* warm cream page */
+  --bg-secondary: #fffdf9;
+  --bg-tertiary: #ece8e0;
+  --surface: #ffffff;          /* cards/inputs are clean white on cream */
+  --surface-sunken: #f1eee7;
+  color-scheme: light;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #55524c;
+  --text-muted: #8f8b83;
+
+  --primary: #4f46e5;
+  --primary-hover: #4035c9;
+  --primary-glow: rgba(79, 70, 229, 0.09);
+
+  --accent: #047857;
+  --accent-hover: #036249;
+  --accent-glow: rgba(4, 120, 87, 0.10);
+
+  --border-color: rgba(26, 24, 20, 0.10);
+  --border-strong: rgba(26, 24, 20, 0.16);
+  --border-hover: rgba(26, 24, 20, 0.24);
+
+  /* Editorial cards are flat white, not glass */
+  --glass-bg: #ffffff;
+  --glass-border: rgba(26, 24, 20, 0.09);
+  --glass-blur: none;
+
+  /* Sharper, more editorial radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Softer, flatter shadows */
+  --shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.05);
+  --shadow-md: 0 2px 6px rgba(26, 24, 20, 0.06), 0 8px 20px -10px rgba(26, 24, 20, 0.12);
+  --shadow-lg: 0 8px 20px -8px rgba(26, 24, 20, 0.14), 0 24px 48px -18px rgba(26, 24, 20, 0.18);
+  --shadow-brand: 0 1px 2px rgba(26, 24, 20, 0.10);
+  --shadow-glow: 0 8px 20px -8px rgba(79, 70, 229, 0.4);
+}
+
+[data-skin="editorial"][data-theme="dark"] {
+  --bg-primary: #0e0d0c;       /* neutral warm-black */
+  --bg-secondary: #16150f;
+  --bg-tertiary: #201e18;
+  --surface: #161513;
+  --surface-sunken: #131210;
+  color-scheme: dark;
+
+  --text-primary: #f5f3ee;
+  --text-secondary: #cbc7bd;
+  --text-muted: #928d82;
+
+  --primary: #7c6cf5;
+  --primary-hover: #8f80f8;
+  --primary-glow: rgba(124, 108, 245, 0.20);
+
+  --accent: #34d399;
+  --accent-glow: rgba(52, 211, 153, 0.14);
+
+  --border-color: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-hover: rgba(255, 255, 255, 0.26);
+
+  --glass-bg: #161513;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: none;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.5), 0 10px 24px -10px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 10px 24px -8px rgba(0, 0, 0, 0.6), 0 28px 56px -18px rgba(0, 0, 0, 0.8);
+  --shadow-brand: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Editorial component overrides: flat accent, crisp headings --- */
+
+/* Flat primary button (kills the classic gradient + brand glow) */
+[data-skin="editorial"] .btn-primary {
+  background-image: none;
+  background-color: var(--primary);
+  background-size: auto;
+  box-shadow: var(--shadow-sm);
+}
+[data-skin="editorial"] .btn-primary:hover {
+  background-image: none;
+  background-color: var(--primary-hover);
+  box-shadow: 0 6px 16px -6px rgba(79, 70, 229, 0.45);
+  transform: translateY(-1px);
+}
+[data-skin="editorial"] .btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Solid, high-contrast headings instead of the subtle dark gradient */
+[data-skin="editorial"] .gradient-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--text-primary);
+}
+
+/* Flat accent wordmark instead of the gradient logo */
+[data-skin="editorial"] .gradient-primary-text {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--primary);
+}
+
 /* Base resets & styles */
 * {
   box-sizing: border-box;

@@ -14,6 +14,9 @@ const productSchema = z.object({
   image_url: z.string().min(1).optional(),
   // When provided, replaces the full set of additional gallery images.
   gallery: z.array(z.string().min(1)).max(10).optional(),
+  // Product video: an uploaded /videos/* path or direct https: URL. When the
+  // key is present it is written verbatim (null clears the existing video).
+  video_url: z.string().max(2048).nullable().optional(),
 });
 
 interface ParamsProps {
@@ -37,16 +40,27 @@ export async function PUT(request: Request, { params }: ParamsProps) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { name, description, price, stock, category, image_url, gallery } = result.data;
+    const { name, description, price, stock, category, image_url, gallery, video_url } = result.data;
+
+    // Whether the caller intends to change the video. When the key is present
+    // (even as null, to clear it) we write it; otherwise the current value is
+    // preserved via COALESCE with a matching flag.
+    const videoProvided = Object.prototype.hasOwnProperty.call(body, 'video_url');
 
     // 3. Update product in database securely with parameter binding.
-    //    COALESCE keeps the current image when no new image_url is supplied.
+    //    COALESCE keeps the current image/video when no new value is supplied.
     const updateResult = db.prepare(`
       UPDATE products
       SET name = ?, description = ?, price = ?, stock = ?, category = ?,
-          image_url = COALESCE(?, image_url)
+          image_url = COALESCE(?, image_url),
+          video_url = CASE WHEN ? = 1 THEN ? ELSE video_url END
       WHERE id = ?
-    `).run(name, description, price, stock, category, image_url ?? null, id);
+    `).run(
+      name, description, price, stock, category,
+      image_url ?? null,
+      videoProvided ? 1 : 0, videoProvided ? (video_url ?? null) : null,
+      id,
+    );
 
     if (updateResult.changes === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });

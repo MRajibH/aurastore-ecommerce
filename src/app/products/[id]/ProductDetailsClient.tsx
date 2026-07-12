@@ -16,6 +16,7 @@ import styles from './ProductDetailsClient.module.css';
 interface ProductDetailsClientProps {
   product: Product;
   images: string[];
+  videoUrl: string | null;
   related: Product[];
   reviewSummary: ReviewSummary;
   reviews: Review[];
@@ -41,6 +42,9 @@ const icons = {
   zoom: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3M11 8v6M8 11h6" /></svg>
   ),
+  play: (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+  ),
 };
 
 const perks = [
@@ -53,6 +57,7 @@ const perks = [
 export default function ProductDetailsClient({
   product,
   images,
+  videoUrl,
   related,
   reviewSummary,
   reviews,
@@ -67,6 +72,26 @@ export default function ProductDetailsClient({
   // Gallery: which image is currently shown in the main viewer
   const gallery = images && images.length > 0 ? images : [product.image_url];
   const [activeImage, setActiveImage] = useState(0);
+
+  // Video: shown as the first gallery item (poster = primary image) and played
+  // in a lightbox. When featured, the main viewer shows the poster + play button.
+  const hasVideo = !!videoUrl;
+  const posterSrc = gallery[0];
+  const [showVideoInMain, setShowVideoInMain] = useState(hasVideo);
+  const [videoOpen, setVideoOpen] = useState(false);
+
+  // Close the video lightbox on Escape and lock body scroll while it is open.
+  useEffect(() => {
+    if (!videoOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setVideoOpen(false); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [videoOpen]);
 
   // Product zoom state
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
@@ -128,16 +153,28 @@ export default function ProductDetailsClient({
       <div className={styles.layout}>
         {/* Product Gallery */}
         <div className={styles.gallery}>
-          {gallery.length > 1 && (
+          {(hasVideo || gallery.length > 1) && (
             <div className={styles.thumbs}>
+              {hasVideo && (
+                <button
+                  className={`${styles.thumb} ${styles.videoThumb} ${showVideoInMain ? styles.thumbActive : ''}`}
+                  onMouseEnter={() => setShowVideoInMain(true)}
+                  onClick={() => { setShowVideoInMain(true); setVideoOpen(true); }}
+                  aria-label="Play product video"
+                  aria-current={showVideoInMain}
+                >
+                  <Image src={posterSrc} alt="" fill sizes="68px" style={{ objectFit: 'cover' }} />
+                  <span className={styles.thumbPlayIcon} aria-hidden="true">{icons.play}</span>
+                </button>
+              )}
               {gallery.map((src, i) => (
                 <button
                   key={src + i}
-                  className={`${styles.thumb} ${i === activeImage ? styles.thumbActive : ''}`}
-                  onMouseEnter={() => setActiveImage(i)}
-                  onClick={() => setActiveImage(i)}
+                  className={`${styles.thumb} ${!showVideoInMain && i === activeImage ? styles.thumbActive : ''}`}
+                  onMouseEnter={() => { setShowVideoInMain(false); setActiveImage(i); }}
+                  onClick={() => { setShowVideoInMain(false); setActiveImage(i); }}
                   aria-label={`View image ${i + 1} of ${gallery.length}`}
-                  aria-current={i === activeImage}
+                  aria-current={!showVideoInMain && i === activeImage}
                 >
                   <Image src={src} alt={`${product.name} view ${i + 1}`} fill sizes="68px" style={{ objectFit: 'cover' }} />
                 </button>
@@ -146,45 +183,94 @@ export default function ProductDetailsClient({
           )}
 
           <div className={styles.imageSection}>
-            <div
-              onMouseMove={handleMouseMove}
-              onMouseEnter={() => setIsZoomed(true)}
-              onMouseLeave={() => {
-                setIsZoomed(false);
-                setZoomPos({ x: 50, y: 50 });
-              }}
-              style={{
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'zoom-in',
-              }}
-            >
-              <Image
-                src={gallery[activeImage]}
-                alt={product.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 45vw"
-                className={styles.avatarGlow}
-                style={{
-                  objectFit: 'cover',
-                  transform: isZoomed ? 'scale(2.2)' : 'scale(1)',
-                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                  transition: isZoomed ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+            {showVideoInMain && hasVideo ? (
+              <button
+                type="button"
+                className={styles.videoPoster}
+                onClick={() => setVideoOpen(true)}
+                aria-label="Play product video"
+              >
+                <Image
+                  src={posterSrc}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  style={{ objectFit: 'cover' }}
+                />
+                <span className={styles.videoPosterPlay} aria-hidden="true">{icons.play}</span>
+                <span className={styles.videoPosterLabel}>Watch video</span>
+              </button>
+            ) : (
+              <div
+                onMouseMove={handleMouseMove}
+                onMouseEnter={() => setIsZoomed(true)}
+                onMouseLeave={() => {
+                  setIsZoomed(false);
+                  setZoomPos({ x: 50, y: 50 });
                 }}
-              />
-              <span className={styles.zoomBadge} style={{ opacity: isZoomed ? 0 : 1 }} aria-hidden="true">
-                {icons.zoom}
-              </span>
-              {gallery.length > 1 && (
-                <span className={styles.imageCount}>{activeImage + 1} / {gallery.length}</span>
-              )}
-            </div>
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'zoom-in',
+                }}
+              >
+                <Image
+                  src={gallery[activeImage]}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  className={styles.avatarGlow}
+                  style={{
+                    objectFit: 'cover',
+                    transform: isZoomed ? 'scale(2.2)' : 'scale(1)',
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                    transition: isZoomed ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                />
+                <span className={styles.zoomBadge} style={{ opacity: isZoomed ? 0 : 1 }} aria-hidden="true">
+                  {icons.zoom}
+                </span>
+                {gallery.length > 1 && (
+                  <span className={styles.imageCount}>{activeImage + 1} / {gallery.length}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Video lightbox */}
+        {videoOpen && hasVideo && (
+          <div
+            className={styles.videoModalOverlay}
+            onClick={() => setVideoOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${product.name} video`}
+          >
+            <div className={styles.videoModalInner} onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className={styles.videoModalClose}
+                onClick={() => setVideoOpen(false)}
+                aria-label="Close video"
+              >
+                ×
+              </button>
+              <video
+                src={videoUrl!}
+                controls
+                autoPlay
+                playsInline
+                className={styles.videoModalPlayer}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Product Info */}
         <div className={styles.infoSection}>

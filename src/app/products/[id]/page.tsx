@@ -137,6 +137,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductDetailsClient
         product={product}
         images={images}
+        videoUrl={product.video_url ?? null}
         related={related}
         reviewSummary={summary}
         reviews={reviews}

@@ -46,3 +46,7 @@ next-env.d.ts
 
 # runtime user uploads (avatars are created at runtime)
 /public/images/avatars/
+
+# runtime admin video uploads — keep the committed demo, ignore the rest
+/public/videos/*
+!/public/videos/demo-product.mp4

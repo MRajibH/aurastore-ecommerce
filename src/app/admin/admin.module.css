@@ -351,3 +351,155 @@
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
+
+/* --- Appearance / theme picker --- */
+.tabPanel {
+  animation: fadeIn 0.45s var(--ease-out) both;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sectionHeading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sectionSub {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  max-width: 60ch;
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+.themeMsg {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.themeCard {
+  display: flex;
+  gap: 1rem;
+  text-align: left;
+  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-color);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.themeCard:hover:not(:disabled) {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.themeCard:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.themeCardActive {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.themeSwatch {
+  position: relative;
+  flex-shrink: 0;
+  width: 68px;
+  height: 68px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.swatch_classic {
+  background: linear-gradient(135deg, #6366f1 0%, #7c5cf6 52%, #a855f7 100%);
+}
+
+.swatch_editorial {
+  background: #f6f4ef;
+}
+
+.themeSwatchBar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.swatch_editorial .themeSwatchBar {
+  background: #1a1a1a;
+}
+
+.themeSwatchDot {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 22px;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.swatch_editorial .themeSwatchDot {
+  background: #4f46e5;
+}
+
+.themeCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.themeCardTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.themeActiveTag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  background: var(--primary-glow);
+  border-radius: var(--radius-full);
+  padding: 0.15rem 0.55rem;
+}
+
+.themeTagline {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.themeDesc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

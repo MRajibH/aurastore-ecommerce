@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import ConsentBanner from "@/components/ConsentBanner";
 import FacebookPixel from "@/components/FacebookPixel";
 import { validateSession } from "@/lib/auth/session";
+import { getThemeSkin } from "@/lib/theme";
 import { SITE_NAME, SITE_TAGLINE, SITE_DESCRIPTION, SITE_URL, SITE_TWITTER } from "@/lib/site";
 
 const geistSans = Geist({
@@ -64,8 +65,17 @@ export default async function RootLayout({
   const sessionResult = await validateSession();
   const user = sessionResult ? sessionResult.user : null;
 
+  // Active storefront skin (global, admin-controlled). Applied to <html> so the
+  // whole tree re-themes via CSS variables. Independent of light/dark mode.
+  const skin = getThemeSkin();
+
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      data-skin={skin}
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {/* Set the theme before paint to avoid a flash of the wrong theme. */}
         <script

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { validateSession } from '@/lib/auth/session';
-import { saveImageUpload } from '@/lib/uploads';
+import { saveImageUpload, saveVideoUpload } from '@/lib/uploads';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,11 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    const result = await saveImageUpload(formData.get('file'), 'products');
+    const kind = formData.get('kind');
+    const result =
+      kind === 'video'
+        ? await saveVideoUpload(formData.get('file'))
+        : await saveImageUpload(formData.get('file'), 'products');
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }

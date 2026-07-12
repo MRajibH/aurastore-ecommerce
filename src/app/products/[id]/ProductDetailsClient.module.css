@@ -144,6 +144,165 @@
   height: 20px;
 }
 
+/* --- Product video --- */
+
+/* Play glyph badge shown on the video thumbnail */
+.thumbPlayIcon {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+
+.thumbPlayIcon svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+}
+
+.videoThumb:hover .thumbPlayIcon {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Main viewer poster (click to open the lightbox) */
+.videoPoster {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.videoPoster::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.12);
+  transition: background var(--transition);
+}
+
+.videoPoster:hover::after {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.videoPosterPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), background var(--transition);
+}
+
+.videoPoster:hover .videoPosterPlay {
+  transform: translate(-50%, -50%) scale(1.06);
+  background: #fff;
+}
+
+.videoPosterPlay svg {
+  width: 30px;
+  height: 30px;
+  margin-left: 3px; /* optically centre the triangle */
+}
+
+.videoPosterLabel {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.9rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Lightbox */
+.videoModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: videoFade 0.2s ease;
+}
+
+@keyframes videoFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.videoModalInner {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 85vh;
+}
+
+.videoModalPlayer {
+  width: 100%;
+  max-height: 85vh;
+  border-radius: var(--radius-md);
+  background: #000;
+  box-shadow: var(--shadow-lg);
+  display: block;
+}
+
+.videoModalClose {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: #fff;
+  color: #111;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition);
+}
+
+.videoModalClose:hover {
+  transform: scale(1.08);
+}
+
+@media (max-width: 560px) {
+  .videoModalClose {
+    top: 8px;
+    right: 8px;
+  }
+}
+
 .infoSection {
   display: flex;
   flex-direction: column;

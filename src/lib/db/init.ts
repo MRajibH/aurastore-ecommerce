@@ -88,6 +88,12 @@ export async function initDb() {
       updated_at INTEGER
     );
 
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS product_images (
       id TEXT PRIMARY KEY,
       product_id TEXT NOT NULL,
@@ -225,6 +231,13 @@ export async function initDb() {
   addColumn('bio', 'TEXT');
   addColumn('address', 'TEXT');
 
+  // Migration: add optional product video (shown as the first gallery item and
+  // played in a lightbox on the product page).
+  const productColumns = db.prepare('PRAGMA table_info(products)').all() as { name: string }[];
+  if (!productColumns.some((c) => c.name === 'video_url')) {
+    db.exec('ALTER TABLE products ADD COLUMN video_url TEXT');
+  }
+
   // Seed default admin user if not exists
   const adminEmail = 'admin@ecom.com';
   const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
@@ -320,6 +333,10 @@ export async function initDb() {
     });
 
     transaction(mockProducts);
+
+    // Give one product a demo video so the gallery video feature is visible
+    // out of the box (admins can add/replace videos per product).
+    db.prepare("UPDATE products SET video_url = ? WHERE id = 'p1'").run('/videos/demo-product.mp4');
     console.log('Seeded default products catalog');
   }
 

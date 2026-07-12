@@ -7,6 +7,7 @@ import { listReviews } from "@/lib/reviews";
 import { listDiscounts } from "@/lib/discounts";
 import { subscriberCount } from "@/lib/email";
 import { listAbandonedCarts } from "@/lib/abandoned";
+import { getThemeSkin } from "@/lib/theme";
 import AdminClient from "./AdminClient";
 
 export const dynamic = "force-dynamic";
@@ -138,6 +139,7 @@ export default async function AdminPage() {
       discounts={discounts}
       retention={retention}
       topProducts={topProducts}
+      currentSkin={getThemeSkin()}
     />
   );
 }

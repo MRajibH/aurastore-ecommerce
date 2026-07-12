@@ -14,6 +14,8 @@ const productSchema = z.object({
   image_url: z.string().min(1).optional(),
   // Additional gallery images shown on the product page (beyond the primary).
   gallery: z.array(z.string().min(1)).max(10).optional(),
+  // Optional product video: an uploaded /videos/* path or a direct https: URL.
+  video_url: z.string().min(1).max(2048).nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -31,21 +33,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { name, description, price, stock, category, image_url, gallery } = result.data;
+    const { name, description, price, stock, category, image_url, gallery, video_url } = result.data;
     const productId = crypto.randomUUID();
     const imageUrl = image_url || '/images/products/placeholder.svg';
 
     // 3. Create product + gallery atomically using parameter binding
     const insertProduct = db.prepare(`
-      INSERT INTO products (id, name, description, price, stock, image_url, category, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (id, name, description, price, stock, image_url, category, video_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertImage = db.prepare(`
       INSERT INTO product_images (id, product_id, url, sort_order, created_at)
       VALUES (?, ?, ?, ?, ?)
     `);
     db.transaction(() => {
-      insertProduct.run(productId, name, description, price, stock, imageUrl, category, Date.now());
+      insertProduct.run(productId, name, description, price, stock, imageUrl, category, video_url || null, Date.now());
       (gallery ?? []).forEach((url, i) => insertImage.run(crypto.randomUUID(), productId, url, i + 1, Date.now()));
     })();
 
