@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Avatar from './Avatar';
 import ThemeToggle from './ThemeToggle';
 import { useCart } from '../context/CartContext';
 import styles from './Navbar.module.css';
@@ -60,11 +60,7 @@ export default function Navbar({ user }: NavbarProps) {
             <div className={styles.userMenu}>
               <Link href="/profile" className={styles.profileLink} aria-label="View your profile">
                 <span className={styles.avatarBadge}>
-                  {user.avatar_url ? (
-                    <Image src={user.avatar_url} alt="" fill sizes="32px" style={{ objectFit: 'cover' }} />
-                  ) : (
-                    user.name.trim().charAt(0).toUpperCase()
-                  )}
+                  <Avatar src={user.avatar_url} name={user.name} sizes="32px" maxInitials={1} />
                 </span>
                 <span className={styles.userName}>Hi, {user.name.split(' ')[0]}</span>
               </Link>

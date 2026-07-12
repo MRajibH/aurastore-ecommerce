@@ -2,7 +2,7 @@
 import React, { useState, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import Avatar from '@/components/Avatar';
 import styles from './profile.module.css';
 
 interface ProfileUser {
@@ -140,14 +140,6 @@ export default function ProfileClient({ user, orders, stats }: ProfileClientProp
     }
   };
 
-  const initials = user.name
-    .split(' ')
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
   const memberSince = new Date(user.created_at).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -170,11 +162,13 @@ export default function ProfileClient({ user, orders, stats }: ProfileClientProp
               aria-label="Change profile photo"
               disabled={avatarUploading}
             >
-              {avatarUrl ? (
-                <Image src={avatarUrl} alt="Profile" fill sizes="110px" style={{ objectFit: 'cover' }} />
-              ) : (
-                <span className={styles.avatarInitials}>{initials}</span>
-              )}
+              <Avatar
+                src={avatarUrl}
+                name={user.name}
+                sizes="110px"
+                maxInitials={2}
+                initialsClassName={styles.avatarInitials}
+              />
               <span className={styles.avatarOverlay}>{avatarUploading ? '…' : 'Edit'}</span>
             </button>
             <input
