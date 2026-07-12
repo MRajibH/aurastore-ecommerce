@@ -9,6 +9,7 @@ const productSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.number().positive('Price must be a positive number'),
   stock: z.number().int().nonnegative('Stock must be a non-negative integer'),
+  reserved_stock: z.number().int().nonnegative('Reserved stock must be a non-negative integer').optional(),
   category: z.string().min(2, 'Category must be selected'),
   // Optional: only replaces the existing image when a new path is provided.
   image_url: z.string().min(1).optional(),
@@ -40,25 +41,28 @@ export async function PUT(request: Request, { params }: ParamsProps) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { name, description, price, stock, category, image_url, gallery, video_url } = result.data;
+    const { name, description, price, stock, reserved_stock, category, image_url, gallery, video_url } = result.data;
 
-    // Whether the caller intends to change the video. When the key is present
-    // (even as null, to clear it) we write it; otherwise the current value is
-    // preserved via COALESCE with a matching flag.
+    // Whether the caller intends to change the video / reserved stock. When the
+    // key is present we write it; otherwise the current value is preserved via a
+    // CASE guard (release/hold flows manage reserved_stock separately).
     const videoProvided = Object.prototype.hasOwnProperty.call(body, 'video_url');
+    const reservedProvided = Object.prototype.hasOwnProperty.call(body, 'reserved_stock');
 
     // 3. Update product in database securely with parameter binding.
-    //    COALESCE keeps the current image/video when no new value is supplied.
+    //    COALESCE/CASE keep current image/video/reserved when not supplied.
     const updateResult = db.prepare(`
       UPDATE products
       SET name = ?, description = ?, price = ?, stock = ?, category = ?,
           image_url = COALESCE(?, image_url),
-          video_url = CASE WHEN ? = 1 THEN ? ELSE video_url END
+          video_url = CASE WHEN ? = 1 THEN ? ELSE video_url END,
+          reserved_stock = CASE WHEN ? = 1 THEN ? ELSE reserved_stock END
       WHERE id = ?
     `).run(
       name, description, price, stock, category,
       image_url ?? null,
       videoProvided ? 1 : 0, videoProvided ? (video_url ?? null) : null,
+      reservedProvided ? 1 : 0, reservedProvided ? (reserved_stock ?? 0) : null,
       id,
     );
 

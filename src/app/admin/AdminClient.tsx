@@ -160,7 +160,52 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [reserved, setReserved] = useState('');
   const [category, setCategory] = useState('Electronics');
+
+  // Inventory manager (release / hold back / add) modal state
+  const [invProduct, setInvProduct] = useState<any | null>(null);
+  const [invCounts, setInvCounts] = useState<{ available: number; reserved: number; total: number } | null>(null);
+  const [invQty, setInvQty] = useState('');
+  const [invBusy, setInvBusy] = useState(false);
+  const [invError, setInvError] = useState<string | null>(null);
+
+  const openInventory = (p: any) => {
+    setInvProduct(p);
+    const reservedQty = p.reserved_stock ?? 0;
+    setInvCounts({ available: p.stock, reserved: reservedQty, total: p.stock + reservedQty });
+    setInvQty('');
+    setInvError(null);
+  };
+
+  const runInventory = async (action: 'release' | 'hold' | 'add') => {
+    const quantity = parseInt(invQty, 10);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      setInvError('Enter a quantity of at least 1.');
+      return;
+    }
+    setInvBusy(true);
+    setInvError(null);
+    try {
+      const res = await fetch(`/api/admin/products/${invProduct.id}/inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, quantity }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInvError(data.error || 'Failed to update inventory.');
+        return;
+      }
+      setInvCounts(data.inventory);
+      setInvQty('');
+      router.refresh();
+    } catch {
+      setInvError('Failed to reach the server.');
+    } finally {
+      setInvBusy(false);
+    }
+  };
   
   const [imageUrl, setImageUrl] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
@@ -319,6 +364,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
           description,
           price: Number(price),
           stock: Number(stock),
+          reserved_stock: reserved === '' ? 0 : Number(reserved),
           category,
           // Omit when empty so the API keeps the existing image (edit) or
           // applies the default placeholder (create).
@@ -351,6 +397,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
     setDescription('');
     setPrice('');
     setStock('');
+    setReserved('');
     setCategory('Electronics');
     setImageUrl('');
     setGallery([]);
@@ -364,6 +411,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
     setDescription(product.description);
     setPrice(product.price.toString());
     setStock(product.stock.toString());
+    setReserved((product.reserved_stock ?? 0).toString());
     setCategory(product.category);
     setImageUrl(product.image_url || '');
     setGallery(Array.isArray(product.gallery) ? product.gallery : []);
@@ -705,7 +753,11 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
         <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: 800 }}>
           Shop Management
         </h1>
-        
+
+        <a href="/admin/pos" className={`btn btn-primary ${styles.posLaunch}`}>
+          🛒 Open POS Register
+        </a>
+
         {/* Navigation Tabs */}
         <div className={styles.tabsList}>
           <button 
@@ -966,7 +1018,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                   </div>
 
                   <div className="form-group" style={{ flex: 1 }}>
-                    <label htmlFor="prod-stock">Stock Level</label>
+                    <label htmlFor="prod-stock">Available (for sale)</label>
                     <input
                       type="number"
                       id="prod-stock"
@@ -979,6 +1031,23 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                       onBlur={handleBlur}
                     />
                     {fieldErrors.stock && <span className={styles.fieldError}>{fieldErrors.stock}</span>}
+                  </div>
+
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label htmlFor="prod-reserved">Reserved (held back)</label>
+                    <input
+                      type="number"
+                      id="prod-reserved"
+                      name="reserved"
+                      className="input-field"
+                      min="0"
+                      value={reserved}
+                      onChange={(e) => setReserved(e.target.value)}
+                      placeholder="0"
+                    />
+                    <span className={styles.fieldError} style={{ color: 'var(--text-muted)' }}>
+                      Held back from sale. Use the Inventory button to move units later.
+                    </span>
                   </div>
                 </div>
 
@@ -1138,7 +1207,7 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                       <th>Product Name</th>
                       <th>Category</th>
                       <th>Price</th>
-                      <th>Stock</th>
+                      <th>Inventory</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -1148,12 +1217,26 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                         <td style={{ fontWeight: 600 }}>{p.name}</td>
                         <td>{p.category}</td>
                         <td>${p.price.toFixed(2)}</td>
-                        <td style={{ color: p.stock < 5 ? 'var(--error)' : 'var(--text-primary)', fontWeight: p.stock < 5 ? 700 : 500 }}>
-                          {p.stock}
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.35 }}>
+                            <span style={{ color: p.stock < 5 ? 'var(--error)' : 'var(--text-primary)', fontWeight: p.stock < 5 ? 700 : 600 }}>
+                              {p.stock} available
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              {(p.reserved_stock ?? 0)} reserved · {p.stock + (p.reserved_stock ?? 0)} total
+                            </span>
+                          </div>
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button 
+                            <button
+                              className="btn btn-secondary"
+                              onClick={() => openInventory(p)}
+                              style={{ padding: '0.2rem 0.5rem', minHeight: '32px', fontSize: '0.8rem' }}
+                            >
+                              Inventory
+                            </button>
+                            <button
                               className="btn btn-secondary"
                               onClick={() => handleEditClick(p)}
                               style={{ padding: '0.2rem 0.5rem', minHeight: '32px', fontSize: '0.8rem' }}
@@ -1179,6 +1262,67 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
         </div>
       )}
 
+      {/* --- INVENTORY MODAL (release / hold back / add) --- */}
+      {invProduct && invCounts && (
+        <div className={styles.invOverlay} onClick={() => setInvProduct(null)} role="dialog" aria-modal="true">
+          <div className={`glass-card ${styles.invDialog}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.invHead}>
+              <div>
+                <h3 className={styles.invTitle}>Inventory</h3>
+                <p className={styles.invProductName}>{invProduct.name}</p>
+              </div>
+              <button className={styles.invClose} onClick={() => setInvProduct(null)} aria-label="Close">×</button>
+            </div>
+
+            <div className={styles.invCounts}>
+              <div className={styles.invStat}>
+                <span className={styles.invStatValue}>{invCounts.available}</span>
+                <span className={styles.invStatLabel}>Available</span>
+              </div>
+              <div className={styles.invStat}>
+                <span className={styles.invStatValue}>{invCounts.reserved}</span>
+                <span className={styles.invStatLabel}>Reserved</span>
+              </div>
+              <div className={styles.invStat}>
+                <span className={styles.invStatValue}>{invCounts.total}</span>
+                <span className={styles.invStatLabel}>Total</span>
+              </div>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+              <label htmlFor="inv-qty">Quantity</label>
+              <input
+                id="inv-qty"
+                type="number"
+                min="1"
+                className="input-field"
+                value={invQty}
+                onChange={(e) => setInvQty(e.target.value)}
+                placeholder="e.g. 10"
+                autoFocus
+              />
+            </div>
+
+            {invError && <div className={styles.invError}>{invError}</div>}
+
+            <div className={styles.invActions}>
+              <button className="btn btn-primary" disabled={invBusy} onClick={() => runInventory('release')}>
+                Release → Available
+              </button>
+              <button className="btn btn-secondary" disabled={invBusy} onClick={() => runInventory('hold')}>
+                Hold back → Reserve
+              </button>
+              <button className="btn btn-secondary" disabled={invBusy} onClick={() => runInventory('add')}>
+                Add new stock
+              </button>
+            </div>
+            <p className={styles.invHint}>
+              Release moves reserve → available (sellable). Hold back removes units from sale. Add records new arrivals as available.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* --- ORDERS TAB --- */}
       {activeTab === 'orders' && (
         <div className="animate-fade-in">
@@ -1195,6 +1339,9 @@ export default function AdminClient({ stats, products, lowStockProducts, orders,
                     <div>
                       <span className={styles.orderLabel}>ORDER ID</span>
                       <code className={styles.orderId}>{order.id}</code>
+                      <span className={`badge ${order.channel === 'pos' ? 'badge-accent' : 'badge-primary'}`} style={{ marginLeft: '0.5rem' }}>
+                        {order.channel === 'pos' ? 'In-store (POS)' : 'Online'}
+                      </span>
                     </div>
                     <div>
                       <span className={styles.orderLabel}>CUSTOMER</span>

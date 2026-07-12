@@ -234,9 +234,27 @@ export async function initDb() {
   // Migration: add optional product video (shown as the first gallery item and
   // played in a lightbox on the product page).
   const productColumns = db.prepare('PRAGMA table_info(products)').all() as { name: string }[];
-  if (!productColumns.some((c) => c.name === 'video_url')) {
+  const productColSet = new Set(productColumns.map((c) => c.name));
+  if (!productColSet.has('video_url')) {
     db.exec('ALTER TABLE products ADD COLUMN video_url TEXT');
   }
+  // Inventory hold-back: `stock` stays the sellable/released quantity; new
+  // `reserved_stock` holds units the admin has but hasn't released for sale.
+  if (!productColSet.has('reserved_stock')) {
+    db.exec('ALTER TABLE products ADD COLUMN reserved_stock INTEGER NOT NULL DEFAULT 0');
+  }
+
+  // Migration: add point-of-sale fields to `orders`. `channel` distinguishes
+  // online orders from in-store POS sales; the payment columns record how an
+  // in-store sale was tendered.
+  const orderCols2 = new Set((db.prepare('PRAGMA table_info(orders)').all() as { name: string }[]).map((c) => c.name));
+  const addOrderCol = (name: string, definition: string) => {
+    if (!orderCols2.has(name)) db.exec(`ALTER TABLE orders ADD COLUMN ${name} ${definition}`);
+  };
+  addOrderCol('channel', "TEXT NOT NULL DEFAULT 'online'");
+  addOrderCol('payment_method', 'TEXT');
+  addOrderCol('amount_tendered', 'REAL');
+  addOrderCol('change_due', 'REAL');
 
   // Seed default admin user if not exists
   const adminEmail = 'admin@ecom.com';

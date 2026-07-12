@@ -9,6 +9,7 @@ const productSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.number().positive('Price must be a positive number'),
   stock: z.number().int().nonnegative('Stock must be a non-negative integer'),
+  reserved_stock: z.number().int().nonnegative('Reserved stock must be a non-negative integer').optional(),
   category: z.string().min(2, 'Category must be selected'),
   // Relative path produced by the /api/admin/upload endpoint (or a manual path).
   image_url: z.string().min(1).optional(),
@@ -33,21 +34,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { name, description, price, stock, category, image_url, gallery, video_url } = result.data;
+    const { name, description, price, stock, reserved_stock, category, image_url, gallery, video_url } = result.data;
     const productId = crypto.randomUUID();
     const imageUrl = image_url || '/images/products/placeholder.svg';
 
     // 3. Create product + gallery atomically using parameter binding
     const insertProduct = db.prepare(`
-      INSERT INTO products (id, name, description, price, stock, image_url, category, video_url, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (id, name, description, price, stock, reserved_stock, image_url, category, video_url, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertImage = db.prepare(`
       INSERT INTO product_images (id, product_id, url, sort_order, created_at)
       VALUES (?, ?, ?, ?, ?)
     `);
     db.transaction(() => {
-      insertProduct.run(productId, name, description, price, stock, imageUrl, category, video_url || null, Date.now());
+      insertProduct.run(productId, name, description, price, stock, reserved_stock ?? 0, imageUrl, category, video_url || null, Date.now());
       (gallery ?? []).forEach((url, i) => insertImage.run(crypto.randomUUID(), productId, url, i + 1, Date.now()));
     })();
 
